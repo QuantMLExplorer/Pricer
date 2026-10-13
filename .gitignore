@@ -1,0 +1,22 @@
+# Dossiers de compilation à la racine
+/build/
+/pnl/
+/pnl-install/
+/test_pnl/
+
+# Fichiers générés par CMake, partout dans le projet
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# Fichiers compilés
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.exe
+*.ou
