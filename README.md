@@ -8,11 +8,12 @@ Supported products:
 
 | Key (`option type`) | Product | Payoff |
 |---|---|---|
-| `basket` | Basket option | `( sum_i lambda_i * S_{T,i} - K )^+` |
-| `asian` | Discrete Asian option | `( sum_i lambda_i * (1/(N+1)) * sum_{j=0..N} S_{t_j,i} - K )^+` |
-| `performance` | Performance option on a basket | `1 + sum_{j=1..N} ( basket(t_j) / basket(t_{j-1}) - 1 )^+` |
+| `basket` | Basket option | $\Big(\sum_{i=1}^{D} \lambda_i S_{T,i} - K\Big)^+$ |
+| `asian` | Discrete Asian option | $\Big(\sum_{i=1}^{D} \lambda_i \frac{1}{N+1} \sum_{j=0}^{N} S_{t_j,i} - K\Big)^+$ |
+| `performance` | Performance option on a basket | $1 + \sum_{j=1}^{N}\Big(\frac{B(t_j)}{B(t_{j-1})} - 1\Big)^+$ |
 
-`basket(t_j) = sum_i lambda_i * S_{t_j,i}`. The performance option has no strike.
+where $B(t_j) = \sum_{i=1}^{D} \lambda_i S_{t_j,i}$ is the value of the basket at $t_j$.
+The performance option has no strike.
 
 ## Requirements
 
@@ -103,20 +104,37 @@ In the code, `i` indexes the assets and `j` indexes the dates.
 
 ## Method
 
-- **Simulation.** `S_{t_{j+1}, i} = S_{t_j, i} exp((r - sigma_i^2 / 2) dt + sigma_i sqrt(dt) (L G)_i)`, where `L`
-  is the Cholesky factor of the correlation matrix and `G` a standard gaussian vector.
-  The market is simulated with the same formula, with the trend `mu` instead of `r`.
-- **Price at time t.** The future is simulated from the observed price `s_t`, since
-  `S_{t+u} = s_t * S~_u`. The first step lasts until the next fixing date, and the result is
-  discounted by `exp(-r (T - t))`.
-- **Delta.** Centred finite differences with relative step `h`. For each sample, a single path is
-  simulated and the shifted paths `(1 + h)` and `(1 - h)` are built from it, so they share the same
-  randomness.
-- **Hedging.** At each market date, the price and the delta are computed with the observed past and
-  the portfolio is rebalanced:
-  `V_0 = p_0 - delta_0 . S_0`, `V_j = V_{j-1} exp(r T / H) - (delta_j - delta_{j-1}) . S_j`,
-  `P&L = V_H + delta_H . S_T - payoff`.
-- **Confidence interval.** `price +/- 1.96 * priceStdDev` (95%).
+**Simulation.** With $\Delta t$ the time step, $L$ the Cholesky factor of the correlation matrix and $G$ a standard gaussian vector:
+
+$$
+S_{t_{j+1},i} = S_{t_j,i} \exp\Big(\big(r - \tfrac{\sigma_i^2}{2}\big)\Delta t + \sigma_i \sqrt{\Delta t}\,(LG)_i\Big)
+$$
+
+The market is simulated with the same formula, with the trend $\mu_i$ instead of $r$.
+
+**Price at time $t$.** The future is simulated from the observed price $s_t$, since $S_{t+u} = s_t \tilde S_u$. The first step lasts until the next fixing date, and the result is discounted by $e^{-r(T-t)}$:
+
+$$
+v(t) \approx e^{-r(T-t)} \frac{1}{M} \sum_{m=1}^{M} \varphi\big(s_{t_0}, \dots, s_{t_k}, s_t \tilde S^{(m)}_{t_{k+1}-t}, \dots, s_t \tilde S^{(m)}_{t_N-t}\big)
+$$
+
+**Delta.** Centred finite differences with relative step $h$. Both shifted paths come from the same simulation, so they share the same randomness, which keeps the variance low:
+
+$$
+\delta_i \approx \frac{e^{-r(T-t)}}{2 h\, s_{t,i}} \cdot \frac{1}{M} \sum_{m=1}^{M} \Big(\varphi\big(\text{path}^{(m)}_{i,+}\big) - \varphi\big(\text{path}^{(m)}_{i,-}\big)\Big)
+$$
+
+**Hedging.** At each market date $\tau_j = jT/H$, the price $p_j$ and the delta $\delta_j$ are computed with the observed past, and the portfolio is rebalanced:
+
+$$
+V_0 = p_0 - \delta_0 \cdot S_0, \qquad V_j = V_{j-1}\, e^{rT/H} - (\delta_j - \delta_{j-1}) \cdot S_{\tau_j}
+$$
+
+$$
+\text{P\&L} = V_H + \delta_H \cdot S_T - \text{payoff}
+$$
+
+**Confidence interval.** $\text{price} \pm 1.96 \times \text{priceStdDev}$ (95%)..
 
 ## Design choices
 
