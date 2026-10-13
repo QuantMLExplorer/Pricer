@@ -41,61 +41,64 @@ endif()
 
 ### Ne rien modifier dans la partie au dessus de cette ligne.
 
-# Test the parser
-add_executable(test_json_reader src/json_helper.cpp src/test_json_reader.cpp)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ---------------------------------------------------------------------------
+# Core library: every source file of the pricer is listed here, once.
+#   io/       json and market reading, construction of the objects
+#   model/    Black-Scholes model
+#   options/  payoffs
+#   pricing/  Monte Carlo price and delta
+#   hedging/  profit and loss of the delta hedging
+# utils/ only contains headers (time_grid.hpp).
+# ---------------------------------------------------------------------------
+add_library(pricer_core STATIC
+    src/io/json_helper.cpp
+    src/io/pricer_setup.cpp
+    src/model/BlackScholesModel.cpp
+    src/options/Option.cpp
+    src/options/BasketOption.cpp
+    src/options/AsianOption.cpp
+    src/options/PerformanceOption.cpp
+    src/pricing/MonteCarlo.cpp
+    src/hedging/Hedging.cpp)
+
+# Headers are included with their folder: #include "model/BlackScholesModel.hpp"
+target_include_directories(pricer_core PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(pricer_core PUBLIC ${LIBS} nlohmann_json::nlohmann_json)
+
+# ---------------------------------------------------------------------------
+# Executables: each one only needs its main file and the core library.
+# ---------------------------------------------------------------------------
+
+# Test the parser (file provided with the project, left untouched)
+add_executable(test_json_reader src/io/json_helper.cpp tests/test_json_reader.cpp)
+target_include_directories(test_json_reader PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/src/io)
 target_link_libraries(test_json_reader
     ${PNL_LIBRARIES}
     nlohmann_json::nlohmann_json
 )
 pnl_add_postbuild(test_json_reader)
 
-add_executable(test_price0
-    src/test_price0.cpp
-    src/json_helper.cpp
-    src/BlackScholesModel.cpp
-    src/Option.cpp
-    src/BasketOption.cpp
-    src/AsianOption.cpp
-    src/PerformanceOption.cpp
-    src/MonteCarlo.cpp)
-target_link_libraries(test_price0 ${LIBS} nlohmann_json::nlohmann_json)
+# Price at time 0
+add_executable(test_price0 tests/test_price0.cpp)
+target_link_libraries(test_price0 pricer_core)
 
-add_executable(test_pricet
-    src/test_pricet.cpp
-    src/pricer_setup.cpp
-    src/json_helper.cpp
-    src/BlackScholesModel.cpp
-    src/Option.cpp
-    src/BasketOption.cpp
-    src/AsianOption.cpp
-    src/PerformanceOption.cpp
-    src/MonteCarlo.cpp)
-target_link_libraries(test_pricet ${LIBS} nlohmann_json::nlohmann_json)
+# Price and delta at a time t read on a market trajectory
+add_executable(test_pricet tests/test_pricet.cpp)
+target_link_libraries(test_pricet pricer_core)
 
-add_executable(test_hedge
-    src/test_hedge.cpp
-    src/Hedging.cpp
-    src/pricer_setup.cpp
-    src/json_helper.cpp
-    src/BlackScholesModel.cpp
-    src/Option.cpp
-    src/BasketOption.cpp
-    src/AsianOption.cpp
-    src/PerformanceOption.cpp
-    src/MonteCarlo.cpp)
-target_link_libraries(test_hedge ${LIBS} nlohmann_json::nlohmann_json)
+# Profit and loss of the delta hedging along a market trajectory
+add_executable(test_hedge tests/test_hedge.cpp)
+target_link_libraries(test_hedge pricer_core)
 
-add_executable(test_simul_market
-    src/test_simul_market.cpp
-    src/pricer_setup.cpp
-    src/json_helper.cpp
-    src/BlackScholesModel.cpp
-    src/Option.cpp
-    src/BasketOption.cpp
-    src/AsianOption.cpp
-    src/PerformanceOption.cpp
-    src/MonteCarlo.cpp)
-target_link_libraries(test_simul_market ${LIBS} nlohmann_json::nlohmann_json)
+# Check of the market simulation under the historical probability
+add_executable(test_simul_market tests/test_simul_market.cpp)
+target_link_libraries(test_simul_market pricer_core)
+
 
 # Print compiler flags
 get_directory_property(DirDefs COMPILE_DEFINITIONS)

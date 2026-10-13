@@ -1,5 +1,5 @@
-#include "BlackScholesModel.hpp"
-#include "time_grid.hpp"
+#include "model/BlackScholesModel.hpp"
+#include "utils/time_grid.hpp"
 
 #include <cmath>
 #include <stdexcept>

@@ -1,16 +1,8 @@
-#include "Hedging.hpp"
+#include "hedging/Hedging.hpp"
 
 #include <cmath>
 
-#include "pricer_setup.hpp"   // construct_past
-
-namespace {
-
-/// Quantile of the standard normal distribution for a two-sided 95% confidence interval
-/// (same value as in MonteCarlo.cpp): converts a half width into a standard deviation.
-const double CONFIDENCE_95_QUANTILE = 1.96;
-
-}  
+#include "io/pricer_setup.hpp"   // construct_past
 
 HedgingResults compute_pnl(const BlackScholesModel &model, const Option &option,
                            const MonteCarlo &monte_carlo, const PnlMat *market,
@@ -36,8 +28,7 @@ HedgingResults compute_pnl(const BlackScholesModel &model, const Option &option,
         double current_time = j * maturity / nb_market_steps;
         PnlMat *past = construct_past(market, nb_fixing_dates, j);
 
-        double price, confidence_half_width;
-        monte_carlo.price(past, current_time, rng, price, confidence_half_width);
+        PricingResults pricing = monte_carlo.price(past, current_time, rng);
         monte_carlo.delta(past, current_time, finite_difference_step, rng, delta, delta_std_dev);
 
         // Asset prices at the current time: row j of the market (a view, never freed)
@@ -45,9 +36,9 @@ HedgingResults compute_pnl(const BlackScholesModel &model, const Option &option,
 
         if (j == 0) {
             // V_0 = p_0 - delta_0 . S_0
-            risk_free_amount = price - pnl_vect_scalar_prod(delta, &asset_prices);
-            results.initial_price = price;
-            results.initial_price_std_dev = confidence_half_width / CONFIDENCE_95_QUANTILE;
+            risk_free_amount = pricing.price - pnl_vect_scalar_prod(delta, &asset_prices);
+            results.initial_price = pricing.price;
+            results.initial_price_std_dev = pricing.price_std_dev;
         } else {
             // V_j = V_{j-1} * growth - (delta_j - delta_{j-1}) . S_{tau_j}
             pnl_vect_clone(delta_change, delta);

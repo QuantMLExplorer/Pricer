@@ -7,8 +7,8 @@
 #include "pnl/pnl_matrix.h"
 #include "pnl/pnl_random.h"
 
-#include "BlackScholesModel.hpp"
-#include "Option.hpp"
+#include "model/BlackScholesModel.hpp"
+#include "options/Option.hpp"
 
 /// Helpers that build the objects of the pricer from a json parameter file and a market file.
 /// Each function reads only the json keys it needs.

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "json_helper.hpp"
+#include "io/json_helper.hpp"
 
 int main(int argc, char **argv)
 {

@@ -1,13 +1,13 @@
-#include "pricer_setup.hpp"
+#include "io/pricer_setup.hpp"
 
 #include <fstream>
 #include <stdexcept>
 #include <string>
 
-#include "json_helper.hpp"
-#include "BasketOption.hpp"
-#include "AsianOption.hpp"
-#include "PerformanceOption.hpp"
+#include "io/json_helper.hpp"
+#include "options/BasketOption.hpp"
+#include "options/AsianOption.hpp"
+#include "options/PerformanceOption.hpp"
 
 namespace {
 

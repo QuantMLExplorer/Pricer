@@ -5,14 +5,11 @@
 #include <iomanip>
 #include <iostream>
 
-#include "json_helper.hpp"
-#include "pricer_setup.hpp"
-#include "MonteCarlo.hpp"
+#include "io/json_helper.hpp"
+#include "io/pricer_setup.hpp"
+#include "pricing/MonteCarlo.hpp"
 
 namespace {
-
-/// Quantile of the standard normal distribution for a two-sided 95% confidence interval
-const double CONFIDENCE_95_QUANTILE = 1.96;
 
 /// Seed of the random generator: fixed, so that the results are reproducible
 const unsigned long SEED = 1234;
@@ -34,12 +31,11 @@ int main(int argc, char **argv)
         PnlRng *rng = construct_rng(SEED);
 
         MonteCarlo monte_carlo(*model, *option, read_nb_samples(json_input));
-        double price, confidence_half_width;
-        monte_carlo.price(rng, price, confidence_half_width);
+        PricingResults pricing = monte_carlo.price(rng);
 
         nlohmann::json json_output = {
-            {"price", price},
-            {"priceStdDev", confidence_half_width / CONFIDENCE_95_QUANTILE}};
+            {"price", pricing.price},
+            {"priceStdDev", pricing.price_std_dev}};
         std::cout << std::setw(4) << json_output << std::endl;
 
         delete model;

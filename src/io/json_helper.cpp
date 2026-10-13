@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "json_helper.hpp"
+#include "io/json_helper.hpp"
 
 void from_json(const nlohmann::json &j, PnlVect *&vect) {
     if (j.is_number()) {

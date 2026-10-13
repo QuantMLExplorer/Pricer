@@ -3,9 +3,9 @@
 #include "pnl/pnl_matrix.h"
 #include "pnl/pnl_random.h"
 
-#include "BlackScholesModel.hpp"
-#include "Option.hpp"
-#include "MonteCarlo.hpp"
+#include "model/BlackScholesModel.hpp"
+#include "options/Option.hpp"
+#include "pricing/MonteCarlo.hpp"
 
 /// Results of the delta hedging of an option along a market trajectory.
 struct HedgingResults {

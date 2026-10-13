@@ -1,28 +1,28 @@
-#include "MonteCarlo.hpp"
+#include "pricing/MonteCarlo.hpp"
 
 #include <cmath>
 #include <stdexcept>
 
-#include "time_grid.hpp"
+#include "utils/time_grid.hpp"
 
 namespace {
 
-/// Quantile of the standard normal distribution for a two-sided 95% confidence interval.
-const double CONFIDENCE_95_QUANTILE = 1.96;
-
 /// Turns the sum and the sum of squares of the payoffs into a discounted price
-/// and the half width of its 95% confidence interval.
-void discounted_estimate(double sum, double sum_of_squares, long nb_samples, double discount,
-                         double &price, double &confidence_half_width)
+/// and the standard deviation of its estimator.
+PricingResults discounted_estimate(double sum_of_payoffs, double sum_of_squared_payoffs,
+                                   long nb_samples, double discount)
 {
     double nb = (double)nb_samples;
-    double mean = sum / nb;
-    double variance = sum_of_squares / nb - mean * mean;
+    double mean = sum_of_payoffs / nb;
+    double variance = sum_of_squared_payoffs / nb - mean * mean;
     if (variance < 0.0) {
         variance = 0.0;   // rounding errors: avoids the square root of a negative number
     }
-    price = discount * mean;
-    confidence_half_width = CONFIDENCE_95_QUANTILE * discount * sqrt(variance) / sqrt(nb);
+
+    PricingResults results;
+    results.price = discount * mean;
+    results.price_std_dev = discount * sqrt(variance / nb);
+    return results;
 }
 
 /// Checks that past has nb_assets rows and the expected number of columns at time t.
@@ -55,7 +55,7 @@ MonteCarlo::MonteCarlo(const BlackScholesModel &model_, const Option &option_, l
 
 // ---------- Price at time 0 ----------
 
-void MonteCarlo::price(PnlRng *rng, double &price, double &confidence_half_width) const
+PricingResults MonteCarlo::price(PnlRng *rng) const
 {
     double maturity = option.getT();
     int nb_fixing_dates = option.getN();
@@ -73,15 +73,15 @@ void MonteCarlo::price(PnlRng *rng, double &price, double &confidence_half_width
     }
 
     double discount = exp(-model.getR() * maturity);
-    discounted_estimate(sum_of_payoffs, sum_of_squared_payoffs, nb_samples, discount,
-                        price, confidence_half_width);
+    PricingResults results =
+        discounted_estimate(sum_of_payoffs, sum_of_squared_payoffs, nb_samples, discount);
     pnl_mat_free(&path);
+    return results;
 }
 
 // ---------- Price at time t ----------
 
-void MonteCarlo::price(const PnlMat *past, double t, PnlRng *rng,
-                       double &price, double &confidence_half_width) const
+PricingResults MonteCarlo::price(const PnlMat *past, double t, PnlRng *rng) const
 {
     double maturity = option.getT();
     int nb_fixing_dates = option.getN();
@@ -104,9 +104,10 @@ void MonteCarlo::price(const PnlMat *past, double t, PnlRng *rng,
     }
 
     double discount = exp(-model.getR() * (maturity - t));   // e^{-r(T-t)}, not e^{-rT}
-    discounted_estimate(sum_of_payoffs, sum_of_squared_payoffs, nb_samples, discount,
-                        price, confidence_half_width);
+    PricingResults results =
+        discounted_estimate(sum_of_payoffs, sum_of_squared_payoffs, nb_samples, discount);
     pnl_mat_free(&path);
+    return results;
 }
 
 // ---------- Delta at time t ----------

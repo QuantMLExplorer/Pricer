@@ -6,7 +6,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "pricer_setup.hpp"
+#include "io/pricer_setup.hpp"
 
 namespace {
 

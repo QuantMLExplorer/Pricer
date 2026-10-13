@@ -6,9 +6,9 @@
 #include <iomanip>
 #include <iostream>
 
-#include "json_helper.hpp"
-#include "pricer_setup.hpp"
-#include "Hedging.hpp"
+#include "io/json_helper.hpp"
+#include "io/pricer_setup.hpp"
+#include "hedging/Hedging.hpp"
 
 namespace {
 
