@@ -230,20 +230,4 @@ $H$ must be a multiple of $N$, so that every fixing date is a market date.
 `past` has one extra column holding $s_t$ when $t$ is not a fixing date.
 
 
-## Design choices
-
-- `Option` is an abstract class (pure virtual `payoff`, virtual destructor): `MonteCarlo` is written
-  once and works with every product, and a new product only needs a new derived class.
-- The model does not know the product: maturity and number of fixing dates are arguments of `asset`,
-  so the same model prices options with different maturities. There is no unnecessary dependency
-  between `MonteCarlo`, `Option` and `BlackScholesModel`.
-- `BlackScholesModel` and the three options own PNL pointers: their copy is deleted (`= delete`)
-  to prevent double frees. The constructors copy the vectors they receive.
-- `MonteCarlo` stores references to the model and the option, which must outlive it.
-- `price` returns a `PricingResults` (price and standard deviation of the estimator), computed once
-  from the same samples, so the price and its confidence interval are always consistent.
-- The workspace `path` is allocated once per call and reused for every sample.
-- A time is located on the fixing grid with a relative tolerance (`time_grid::TOLERANCE = 1e-9`),
-  shared by every file, to absorb floating point rounding errors.
-- The random generator is created with a fixed seed in the tests, so the results are reproducible.
 
