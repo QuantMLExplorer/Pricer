@@ -131,15 +131,14 @@ V_0 = p_0 - \delta_0 \cdot S_0, \qquad V_j = V_{j-1}\, e^{rT/H} - (\delta_j - \d
 $$
 
 $$
-\text{P\&L} = V_H + \delta_H \cdot S_T - \text{payoff}
+\text{PnL} = V_H + \delta_H \cdot S_T - \text{payoff}
 $$
 
 **Confidence interval.** $\text{price} \pm 1.96 \times \text{priceStdDev}$ (95%)..
 
 ## Design choices
 
-- `Option` is an abstract class (pure virtual `payoff`, virtual destructor): `MonteCarlo` is written
-  once and works with every product.
+- `Option` is an abstract class (pure virtual `payoff`, virtual destructor) 
 - `BlackScholesModel`, `BasketOption`, `AsianOption` and `PerformanceOption` own PNL pointers: their
   copy is deleted (`= delete`) to prevent double frees.
 - `MonteCarlo` stores references to the model and the option, which must outlive it.
