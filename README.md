@@ -225,7 +225,7 @@ $H$ must be a multiple of $N$, so that every fixing date is a market date.
 |---|---|---|
 | `path` (simulated path) | $D \times (N+1)$ | row `i` = asset, column `j` = fixing date |
 | `market` | $(H+1) \times D$ | row = market date, column = asset |
-| `past` | $D \times (k+1)$ or $D \times (k+2)$ | fixing dates already passed (up to $t_k$, the last fixing date $\le t$); the **last column is always the price at t** |
+
 
 `past` has one extra column holding $s_t$ when $t$ is not a fixing date.
 
